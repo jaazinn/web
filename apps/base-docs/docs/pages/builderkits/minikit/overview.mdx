@@ -1,12 +1,13 @@
 ---
-title: MiniKit Alpha 
+title: MiniKit Alpha | Getting started 
 description: Easiest way to build Mini Apps on Base
 ---
 
-import { MiniKitProvider } from '@coinbase/onchainkit/minikit';
-import { useMiniKit, useAddFrame, useNotification, useOpenUrl, useClose, usePrimaryButton, useViewProfile, useAuthenticate } from '@coinbase/onchainkit/minikit';
-
 # MiniKit
+
+<img alt="MiniKit"
+  src="/images/minikit/minikit-cli.gif"
+  height="364"/>
 
 MiniKit is easiest way to build Mini Apps on Base, allowing developers to easily build applications without needing to know the details of the SDK implementation. It integrates seamlessly with OnchainKit components and provides Coinbase Wallet-specific hooks that degrade gracefully on other clients such as Warpcast.
 
@@ -228,11 +229,11 @@ const viewUserProfile = useViewProfile(123456); // Uses specified FID
 This hook allows users to sign in with Farcaster. It wraps the SDK's signIn message, adding a default nonce and verification.
 
 ```tsx
-const authenticate = useAuthenticate();
+const { signIn } = useAuthenticate();
 
 // Usage
 const handleSignIn = async () => {
-  const result = await authenticate({
+  const result = await signIn({
     domain: 'your-domain.com',
     siweUri: 'https://your-domain.com/login'
   });
