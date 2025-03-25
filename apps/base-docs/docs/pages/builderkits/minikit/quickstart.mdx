@@ -1,6 +1,6 @@
 # MiniKit Quickstart
 
-This guide shows you how to get started with MiniKit to create mini apps right in the social feed! We'll start by setting up the template project with the CLI tool and then explore both built-in and additional features of MiniKit.
+This guide shows you how to get started with MiniKit to create mini apps, also known as frames, right in the social feed! It can also be used to update an exisitng standalone app to a mini app too. We'll start by setting up the template project with the CLI tool and then explore both built-in and additional features of MiniKit.
 
 ## Initial Setup
 
@@ -29,13 +29,13 @@ To test your frame in Warpcast, follow these steps:
 
 1. Start your development server:
 
-```bash
+```bash [Terminal]
 npm run dev
 ```
 
 2. Install and start ngrok to create a tunnel to your local server:
 
-```bash
+```bash [Terminal]
 # Install ngrok if you haven't already
 npm install -g ngrok
 
@@ -43,7 +43,7 @@ npm install -g ngrok
 ngrok http 3000
 ```
 
-3. Copy the HTTPS URL provided by ngrok (e.g., `https://your-tunnel.ngrok.io`)
+3. Copy the HTTPS URL provided by ngrok (e.g. `https://your-tunnel.ngrok.io`)
 
 4. Visit [Warpcast Frames Developer Tools](https://warpcast.com/~/developers/frames)
 
@@ -59,49 +59,79 @@ The template comes with several pre-implemented features. Let's explore where th
 
 ### MiniKitProvider
 
-The `MiniKitProvider` is set up in your root layout file (`app/layout.tsx`). It wraps your application and provides global access to the SDK's context.
+The `MiniKitProvider` is set up in your `providers.tsx` file. It wraps your application to handle initialization, events, and automatically applie client safeAreaInsets to ensure your app doesn't overlap parent application elements.
 
-```tsx [app/layout.tsx]
-import { MiniKitProvider } from '@coinbase/onchainkit/minikit'
+```tsx [app/providers.tsx]
+import { MiniKitProvider } from '@coinbase/onchainkit/minikit';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function Providers(props: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <MiniKitProvider
-          projectId={process.env.NEXT_PUBLIC_CDP_CLIENT_API_KEY!}
-          notificationProxyUrl="/api/notification"
-        >
-          {children}
-        </MiniKitProvider>
-      </body>
-    </html>
-  )
+    <MiniKitProvider
+      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+      chain={base}
+      config={{
+        appearance: {
+          mode: 'auto',
+          theme: 'snake',
+          name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
+          logo: process.env.NEXT_PUBLIC_ICON_URL,
+        },
+      }}
+    >
+      {props.children}
+    </MiniKitProvider>
+  );
 }
 ```
 
+The MiniKitProvider also sets up your wagmi and react-query providers automatically, elimintaing that initial setup work.
+
 ### useMiniKit
 
-The `useMiniKit` hook is implemented in your main page component (`app/page.tsx`). It handles initialization and provides access to the SDK context.
+The `useMiniKit` hook is implemented in your main page component (`app/page.tsx`). It handles initialization of the frame and provides access to the SDK context.
 
 ```tsx [app/page.tsx]
-const { ready, isReady, context, updateClientContext } = useMiniKit()
+const { setFrameReady, isFrameReady, context } = useMiniKit();
 
-// The ready() function is called when your app is ready to be shown
+// The setFrameReady() function is called when your mini-app is ready to be shown
 useEffect(() => {
-  if (!isReady) {
-    ready()
-  }
-}, [isReady, ready])
+    if (!isFrameReady) {
+      setFrameReady();
+    }
+  }, [setFrameReady, isFrameReady]);
 ```
+
+### Creating the Manifest
+
+The Frame Manifest is required in order for users to save the frame to their account. This means its also required to send notifications to the user. We initially skipped this step when setting up the app. Now that we know our ngrok address, we can configure our manifest.
+
+To set up the manifest, run the following in your Terminal
+
+```bash [Terminal]
+npx create-onchain@alpha --generate
+```
+
+Enter `y` to proceed with the setup and your browser will open to the following page:
+
+<img
+  alt="Manifest Setup"
+  src="/images/minikit/manifest-setup.png"
+  height="364"
+/>
+
+The wallet that you connect must be your Farcaster custody wallet. You can import this wallet to your prefered wallet using the recovery phrase. You can find your recovery phrase in the Warpcast app under Settings -> Advanced -> Farcster recovery phrase.
+
+Once connected, add the ngrok url and sign the manifest.
+
+:::warning[Developement Pitfall]
+Note that the ngrok url will change every time you restart ngrok. This means you'll need to recreate the manifest each time you spin up ngrok since its dependent on the URL.
+:::
 
 ### useAddFrame
 
-The `useAddFrame` hook is used to add your application as a frame. It's implemented in your main page component.
+The `useAddFrame` hook is used to add your frame to the user's list of frames. It's implemented in your main page component and displays a button in the top right allowing the user to add the frame to their list.
+
+When a user adds the frame, it returns a url and token, which is used for sending the user notifications. For this walkthrough we'll simply console.log those results to use them later when setting up notifications.
 
 ```tsx [app/page.tsx]
 
@@ -116,9 +146,13 @@ const handleAddFrame = async () => {
 }
 ```
 
+:::warning[Not for Production]
+In production, you'll want to save the url and token associated with each user in a persistent database so that you can send them notifications over time.
+:::
+
 ### useOpenUrl
 
-The `useOpenUrl` hook is used to open external URLs. It's implemented in your main page component.
+The `useOpenUrl` hook is used to open external URLs from within the frame. In the template, its used in the footer button which links to the MiniKit page.
 
 ```tsx [app/page.tsx]
 const openUrl = useOpenUrl()
@@ -127,97 +161,76 @@ const openUrl = useOpenUrl()
 <button onClick={() => openUrl('https://example.com')}>
   Visit Website
 </button>
+
+// Then in the return function
+<footer className="absolute bottom-4 flex items-center w-screen max-w-[520px] justify-center">
+  <button
+    type="button"
+    className="mt-4 ml-4 px-2 py-1 flex justify-start rounded-2xl font-semibold opacity-40 border border-black text-xs"
+    onClick={() => openUrl('https://base.org/builders/minikit')}
+    >
+    BUILT ON BASE WITH MINIKIT
+  </button>
+</footer>
 ```
 
-## Implementing Additional Features
+Now that we've reviewed the MiniKit teamplate and the functionality already implemented, lets add some additional MiniKit features.
+
+## Additional MiniKit Features
 
 Now, let's implement additional hooks provided by the MiniKit library. We'll add these features one by one.
 
-### 1. `useNotification`
+### `useClose`
 
-First, let's add notification support:
-
-```tsx [app/page.tsx]
-import { useNotification } from '@coinbase/onchainkit/minikit'
-
-// Add state for notification tracking
-const [notificationSent, setNotificationSent] = useState(false)
-
-// Add the hook
-const sendNotification = useNotification()
-
-// Add the handler function
-const handleSendNotification = async () => {
-  if (notificationSent) return
-
-  try {
-    await sendNotification({
-      title: 'New High Score! 🎉',
-      body: 'Congratulations on achieving a new high score!'
-    })
-
-    setNotificationSent(true)
-    setTimeout(() => setNotificationSent(false), 30000)
-  } catch (error) {
-    console.error('Failed to send notification:', error)
-  }
-}
-
-// Add the button in your UI
-{context?.client.added && (
-  <button
-    type="button"
-    onClick={handleSendNotification}
-    disabled={notificationSent}
-    className="cursor-pointer bg-transparent font-semibold text-sm disabled:opacity-50"
-  >
-    {notificationSent ? 'NOTIFICATION SENT' : 'SEND NOTIFICATION'}
-  </button>
-)}
-```
-
-### 2. `useClose`
-
-Next, let's add the ability to close the application:
+First, let's add the ability to close the frame from within the interface:
 
 ```tsx [app/page.tsx]
-import { useClose } from '@coinbase/onchainkit/minikit'
+// Add useClose to the import list
+import { useMinikit, useAddFrame, useOpenUrl, useClose } from '@coinbase/onchainkit/minikit'
 
 // Add the hook
 const close = useClose()
 
-// Add the button in your UI
-<button
-  type="button"
-  onClick={close}
-  className="cursor-pointer bg-transparent font-semibold text-sm"
->
-  CLOSE
-</button>
+// Add the button in the header right after the `saveFrameButton`
+<div className="pr-1 justify-end">
+  {saveFrameButton}
+  <button
+    type="button"
+    className="cursor-pointer bg-transparent font-semibold text-sm pl-2""
+    onClick={close}
+    >
+    CLOSE
+  </button>
+</div>
 ```
 
-### 3. `usePrimaryButton`
+If you reload the frame in the Warpcast dev tools preview, you'll now see the close button in the top right.
 
-Let's implement the primary button functionality:
+### `usePrimaryButton`
 
-```tsx [app/page.tsx]
-import { usePrimaryButton } from '@coinbase/onchainkit/minikit'
+The Primary Button is a button that always exists at the bottom of the frame. Its good for managing global state which is relevant throughout your mini app.
 
-// Add state for game control
-const [isGameStarted, setIsGameStarted] = useState(false)
+For the template example, we'll use the Priamry Button to Pause and Restart the game. The game state is managed within the `snake.tsx` component, and we can easily add the `usePrimaryButton` hook there since the MiniKit hooks are available throughout the app.
 
-// Add the hook
+```tsx [/app/components/snake.tsx]
+// add an import for usePrimaryButton
+import {usePrimaryButton } from '@coinbase/onchainkit/minikit'
+
+// game state already exists, so we'll leverage that below.
 usePrimaryButton(
-  { text: isGameStarted ? 'RESTART GAME' : 'START GAME' },
+  {text: gameState == GameState.RUNNING ? 'PAUSE GAME' : 'START GAME'},
   () => {
-    setIsGameStarted(!isGameStarted)
+    setGameState(gameState == GameState.RUNNING ? GameState.PAUSED : GameState.RUNNING);
   }
 )
 ```
 
-### 4. `useViewProfile`
+You'll notice that adding the Primary button takes up space at the bottom of the frame, which causes the "BUILT ON BASE WITH MINIKIT" button to move upwards and overlap with the contorls.
+We can quickly fix that by changing the text to "BUILT WITH MINIKIT" and removing the `ml-4` style in the `className` of the `<button>`
 
-Finally, let's add profile viewing capability:
+### `useViewProfile`
+
+Now, let's add profile viewing capability. The useViewProfile hook allows you to define what profile to use by defining the user's FID, which is great for social applications. If you don't define an FID, it defaults to the client FID.
 
 ```tsx [app/page.tsx]
 import { useViewProfile } from '@coinbase/onchainkit/minikit'
@@ -230,15 +243,57 @@ const handleViewProfile = () => {
   viewProfile()
 }
 
-// Add the button in your UI
+// Add the button in your UI in the header after the close button
 <button
   type="button"
   onClick={handleViewProfile}
-  className="cursor-pointer bg-transparent font-semibold text-sm"
+  className="cursor-pointer bg-transparent font-semibold text-sm pl-2
 >
-  VIEW PROFILE
+  PROFILE
 </button>
 ```
+
+### `useNotification`
+
+One of the major benefits of mini apps is that you can send notifications to your users through their socail app.
+
+Recall the token and url we saved in the [useAddFrame section](docs.base.org/builderkits/minikit/quickstart#useaddframe)? We'll use those now to send a user a notification. In this guide, we'll simply send a test notification unrelated to the game activity.
+
+```tsx [app/page.tsx]
+//add useNotification to the import list
+import {..., useNotification } from '@coinbase/onchainkit/minikit'
+
+// Add the hook
+const sendNotification = useNotification()
+
+// Add the handler function
+const handleSendNotification = async () => {
+  try {
+    await sendNotification({
+      title: 'New High Score! 🎉',
+      body: 'Congratulations on achieving a new high score!'
+    })
+    setTimeout(() => setNotificationSent(false), 30000)
+  } catch (error) {
+    console.error('Failed to send notification:', error)
+  }
+}
+
+// Add the button in your UI
+{context?.client.added && (
+  <button
+    type="button"
+    onClick={handleSendNotification}
+    className="cursor-pointer bg-transparent font-semibold text-sm disabled:opacity-50"
+  >
+    SEND NOTIFICATION
+  </button>
+)}
+```
+
+:::info
+Notice that we first check if the user has added the frame to their list of mini apps before displaying the button. This is using the `context` object provided by `useMiniKit()`. If you don't see the button to send the notification, its likely because mini app hasn't been saved.
+:::
 
 ## Next Steps
 
