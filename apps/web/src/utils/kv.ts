@@ -12,7 +12,7 @@ class KVManager {
   private async getClient(): Promise<Redis> {
     if (!this.client) {
       this.client = new Redis(
-        String(isDevelopment ? process.env.KV_URL_DEVELOPMENT : process.env.REDIS_URL),
+        String(isDevelopment ? process.env.KV_URL_DEVELOPMENT_VERCEL : process.env.KV_URL),
       );
     }
 
