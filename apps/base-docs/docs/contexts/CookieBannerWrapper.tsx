@@ -2,8 +2,15 @@ import { CookieManagerProvider } from '@/components/CookieManager/CookieManagerP
 import ClientAnalyticsScript from '@/components/ClientAnalyticsScript/ClientAnalyticsScript.tsx';
 import { isDevelopment } from '@/constants.ts';
 
-// CJS import
-import { CookieBanner } from '@coinbase/cookie-banner';
+ * CJS import
+ * This import structure for CookieBanner is necessary because in prod, direct
+ * destructuring from @coinbase/cookie-banner fails.
+ * However in dev, the import fails because the pkg is not found.
+ * This structure allows the import to work in prod, and disables the banner in dev.
+ */
+import pkg from '@coinbase/cookie-banner';
+const { CookieBanner } = isDevelopment ? {} : pkg;
+
 
 export const cookieBannerTheme = {
   colors: {
