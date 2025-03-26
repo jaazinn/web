@@ -47,7 +47,6 @@ export class KVManager {
       if (!isDevelopment) {
         logger.error('KV connection failed', err);
       }
-      console.error(err);
       throw new Error(`Failed to connect to KV: ${err}`);
     }
 
@@ -63,7 +62,6 @@ export class KVManager {
         if (!isDevelopment) {
           logger.error('Failed to scan keys', err);
         }
-        console.error(err);
         throw new Error(`Failed to ping: ${err}`);
       }
     }
@@ -88,7 +86,6 @@ export class KVManager {
       if (!isDevelopment) {
         logger.error('Failed to scan keys', err);
       }
-      console.error(err);
       throw new Error(`Failed to scan keys: ${err}`);
     }
   }
@@ -102,7 +99,6 @@ export class KVManager {
       if (!isDevelopment) {
         logger.error('Failed to get key', err);
       }
-      console.error(err);
       throw new Error(`Failed to get key: ${err}`);
     }
   }
@@ -135,7 +131,6 @@ export class KVManager {
       if (!isDevelopment) {
         logger.error('Failed to set key', err);
       }
-      console.error(err);
       throw new Error(`Failed to set key: ${err}`);
     }
   }
@@ -149,7 +144,6 @@ export class KVManager {
       if (!isDevelopment) {
         logger.error('Failed to increment key', err);
       }
-      console.error(err);
       throw new Error(`Failed to increment key: ${err}`);
     }
   }
