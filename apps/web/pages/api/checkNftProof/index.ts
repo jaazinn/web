@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { kv } from 'apps/web/src/utils/kv';
+import { kv } from 'apps/web/src/utils/kv/kv';
 import { logger } from 'apps/web/src/utils/logger';
 
 type RequestBody = {
