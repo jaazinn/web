@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node --require ./tracer/initialize.js ./node_modules/.bin/next start",
-    "build": "next build",
+    "build": "next build && yarn build:ecosystem",
+    "build:ecosystem": "ts-node --project src/scripts/tsconfig.json src/scripts/buildEcosystem.ts",
     "test": "jest",
     "analyze": "ANALYZE=true next build",
     "dev": "node --require ./tracer/initialize.js ./node_modules/.bin/next dev",
