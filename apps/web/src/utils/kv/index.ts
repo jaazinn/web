@@ -56,7 +56,7 @@ export class KVManager {
   async ping() {
     if (this.client) {
       try {
-        return this.client.ping();
+        return await this.client.ping();
       } catch (err) {
         if (!isDevelopment) {
           logger.error('Failed to scan keys', err);
