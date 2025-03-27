@@ -42,7 +42,7 @@ export class KVManager {
     }
 
     try {
-      const pingRes = await this.client.ping();
+      await this.client.ping();
     } catch (err) {
       if (!isDevelopment) {
         logger.error('KV connection failed', err);
@@ -53,11 +53,10 @@ export class KVManager {
     return this.client;
   }
 
-  async ping() {
+  ping() {
     if (this.client) {
       try {
-        const pingRes = await this.client.ping();
-        return pingRes;
+        return this.client.ping();
       } catch (err) {
         if (!isDevelopment) {
           logger.error('Failed to scan keys', err);
@@ -69,8 +68,15 @@ export class KVManager {
 
   async close() {
     if (this.client) {
-      await this.client.quit();
-      this.client = null;
+      try {
+        await this.client.quit();
+        this.client = null;
+      } catch (err) {
+        if (!isDevelopment) {
+          logger.error('Failed to close client', err);
+        }
+        throw new Error(`Failed to close client: ${err}`);
+      }
     }
   }
 
@@ -116,16 +122,16 @@ export class KVManager {
       const stringifiedValue = JSON.stringify(value);
 
       if (!options) {
-        return await client.set(key, stringifiedValue);
+        return client.set(key, stringifiedValue);
       }
       if (options.ex && options.nx) {
-        return await client.set(key, stringifiedValue, 'EX', options.ex, 'NX');
+        return client.set(key, stringifiedValue, 'EX', options.ex, 'NX');
       }
       if (options.nx) {
-        return await client.set(key, stringifiedValue, 'NX');
+        return client.set(key, stringifiedValue, 'NX');
       }
       if (options.ex) {
-        return await client.set(key, stringifiedValue, 'EX', options.ex);
+        return client.set(key, stringifiedValue, 'EX', options.ex);
       }
     } catch (err) {
       if (!isDevelopment) {
@@ -138,8 +144,7 @@ export class KVManager {
   async incr(key: string) {
     try {
       const client = await this.getClient();
-      const result = await client.incr(key);
-      return result;
+      return client.incr(key);
     } catch (err) {
       if (!isDevelopment) {
         logger.error('Failed to increment key', err);
