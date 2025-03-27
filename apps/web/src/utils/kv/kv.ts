@@ -53,7 +53,7 @@ export class KVManager {
     return this.client;
   }
 
-  ping() {
+  async ping() {
     if (this.client) {
       try {
         return this.client.ping();
@@ -122,16 +122,16 @@ export class KVManager {
       const stringifiedValue = JSON.stringify(value);
 
       if (!options) {
-        return client.set(key, stringifiedValue);
+        return await client.set(key, stringifiedValue);
       }
       if (options.ex && options.nx) {
-        return client.set(key, stringifiedValue, 'EX', options.ex, 'NX');
+        return await client.set(key, stringifiedValue, 'EX', options.ex, 'NX');
       }
       if (options.nx) {
-        return client.set(key, stringifiedValue, 'NX');
+        return await client.set(key, stringifiedValue, 'NX');
       }
       if (options.ex) {
-        return client.set(key, stringifiedValue, 'EX', options.ex);
+        return await client.set(key, stringifiedValue, 'EX', options.ex);
       }
     } catch (err) {
       if (!isDevelopment) {
@@ -144,7 +144,7 @@ export class KVManager {
   async incr(key: string) {
     try {
       const client = await this.getClient();
-      return client.incr(key);
+      return await client.incr(key);
     } catch (err) {
       if (!isDevelopment) {
         logger.error('Failed to increment key', err);
